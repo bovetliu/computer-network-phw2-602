@@ -40,6 +40,7 @@ int main(int argc, char *argv[]){
     socklen_t addr_len, tmp_len;
     char ipstr[INET_ADDRSTRLEN];        //INET6_ADDRSTRLEN for IPv6
     connection_info server_conn_info;
+    connection_info *clients_conn_info =(connection_info*)malloc(MAX_CLIENTS*sizeof(connection_info));
 
     initialize_server(argc, argv, server_conn_info);
     int sockfd = server_conn_info.sockfd;
@@ -135,25 +136,24 @@ int main(int argc, char *argv[]){
                 }
                 exit(0);
             }
+            free(p_rec_tftpR->filename);
+            free(p_rec_tftpR->mode);
+            free(p_rec_tftpR);
             // Calculate the size of the file
             streampos first,last;
             // seekg: Set position in input sequence
             // tellg: Get position in input sequence
-            myfile.seekg(0,ios::beg);
             first = myfile.tellg();
             myfile.seekg(0,ios::end);
             last = myfile.tellg();
-            int filesize = last - first;
-            int num_packets = (filesize/512) + 1;           // Calculate the number of packets to be sent
+            int num_packets = ((last - first) /512) + 1;           // Calculate the number of packets to be sent
             myfile.seekg(0,ios::beg); // set the position of input sequence back
-            cout << "File Size = " << filesize << ", Packets = " << num_packets << ", New Port = " << ntohs(p_new_addr_in->sin_port) << endl;
+
+            cout << "File Size = " << last - first<< ", Packets = " << num_packets << ", New Port = " << ntohs(p_new_addr_in->sin_port) << endl;
 
             char file_buf[513];
             int blocknumber = 0, last_ack = 0, resend = 0, m_len;
 
-            free(p_rec_tftpR->filename);
-            free(p_rec_tftpR->mode);
-            free(p_rec_tftpR);
 
             FD_SET(sockfd,&master);
             fdmax = sockfd;
