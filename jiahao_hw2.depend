@@ -1,0 +1,19 @@
+# depslib dependency file v1.0
+1444579569 source:/home/boweiliu/workspace/cb_workspace/jiahao_hw2/server.cpp
+	<sys/types.h>
+	<sys/socket.h>
+	<netdb.h>
+	<unistd.h>
+	<fcntl.h>
+	<arpa/inet.h>
+	<netinet/in.h>
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<sys/wait.h>
+	<signal.h>
+	<iostream>
+	<fstream>
+	<string>
+	<cstdlib>
+
