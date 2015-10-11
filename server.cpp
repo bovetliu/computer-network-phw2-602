@@ -103,7 +103,7 @@ int main(int argc, char *argv[]){
                 perror("server: socket");
             }
             // bind this sockfd with port 0, ( )
-            if((error = bind(sockfd, &new_addr, sizeof(new_addr)))== -1){     // bind the server to the IP address and port
+            if((error = bind(sockfd, &new_addr, sizeof(new_addr)))== -1){     // bind the server to the IP address and port 0, port 0 is important
                 perror("server: bind");
             }
 
@@ -191,15 +191,21 @@ int main(int argc, char *argv[]){
                 }
                 if(FD_ISSET(sockfd,&read_fds)){
                     tmp_len = sizeof tmp_addr;
-                    if ( (num_bytes = recvfrom(sockfd, buf, 4 , 0,(struct sockaddr *)&tmp_addr, &tmp_len)) == -1 ) {        // receive ACK
+                    if ( (num_bytes = recvfrom(sockfd, buf, 1023 , 0,(struct sockaddr *)&tmp_addr, &tmp_len)) == -1 ) {        // receive ACK
                         perror("recvfrom");
                         exit(1);
                     }
-                    struct sockaddr_in* tmp_client_a = (struct sockaddr_in*)&client_addr;
+                    struct sockaddr_in* tmp_client_a = (struct sockaddr_in*)&tmp_addr;
                     if(tmp_client_a->sin_addr.s_addr == new_client_a->sin_addr.s_addr){
                         p_rec_tftpR = decode(buf);                                      // decode ACK message
-                        last_ack = p_rec_tftpR->blocknumber;
-                        //cout << "ACK : " << last_ack << endl;
+                        // need some conditional block to know whether this is an ACK or ERROR
+
+                        //printf("OPCODE: %d, BLOCKNUMBER: %d\n",p_rec_tftpR->opcode, p_rec_tftpR->blocknumber);
+                        if (p_rec_tftpR->opcode == ACK){
+                            last_ack = p_rec_tftpR->blocknumber;
+                        } else if (p_rec_tftpR->opcode == ERROR){
+                            printf("ERROR: BLOCKNUMBER: %d\n",p_rec_tftpR->opcode, p_rec_tftpR->blocknumber);
+                        }
                         free(p_rec_tftpR);
                     }
                 }
@@ -216,7 +222,7 @@ int main(int argc, char *argv[]){
         free(p_rec_tftpR->filename);
         free(p_rec_tftpR->mode);
         free(p_rec_tftpR);
-    }
+    }// while (1) loop
     close(sockfd);
     freeaddrinfo(&server_conn_info.address_info);
     return 0;
