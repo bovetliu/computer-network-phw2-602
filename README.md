@@ -13,6 +13,6 @@ Then run command:
 
 $ tftp 127.0.0.1 3000
 
-tftp> get ~/tmp/myfile.txt
+tftp> get /home/(yourAccountName)/tmp/myfile.txt
 
 then one new myfile.txt will be saved under ~/ folder
