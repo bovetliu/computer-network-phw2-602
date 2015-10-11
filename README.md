@@ -15,4 +15,6 @@ $ tftp 127.0.0.1 3000
 
 tftp> get /home/(yourAccountName)/tmp/myfile.txt
 
+for example, mine is /home/boweiliu/tmp/myfile.txt
+
 then one new myfile.txt will be saved under ~/ folder
