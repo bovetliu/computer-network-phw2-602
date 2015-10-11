@@ -204,7 +204,7 @@ int main(int argc, char *argv[]){
                         if (p_rec_tftpR->opcode == ACK){
                             last_ack = p_rec_tftpR->blocknumber;
                         } else if (p_rec_tftpR->opcode == ERROR){
-                            printf("ERROR: BLOCKNUMBER: %d\n",p_rec_tftpR->opcode, p_rec_tftpR->blocknumber);
+                            printf("ERROR: BLOCKNUMBER: %d\n", p_rec_tftpR->blocknumber);
                         }
                         free(p_rec_tftpR);
                     }
