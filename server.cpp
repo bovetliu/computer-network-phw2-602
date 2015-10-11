@@ -35,56 +35,28 @@
 using namespace std;
 int main(int argc, char *argv[]){
     int error;
-
-    if(argc!=3){                                    // if user arguments are not equal to 3 then give an error
-        fprintf(stderr,"usage: server ip port\n");
-        return 1;
-    }
     struct sigaction sa;
-    struct addrinfo hints;
-    struct addrinfo *servinfo, *p;
     struct sockaddr_storage client_addr, tmp_addr;
     socklen_t addr_len, tmp_len;
     char ipstr[INET_ADDRSTRLEN];        //INET6_ADDRSTRLEN for IPv6
+    connection_info server_conn_info;
 
-    //Getting my address
-    memset(&hints,0,sizeof(hints));     // initializing the hints structure to be given to getaddrinfo
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
-    //hints.ai_flags = AI_PASSIVE;
+    initialize_server(argc, argv, server_conn_info);
+    int sockfd = server_conn_info.sockfd;
 
-    if((error = getaddrinfo(argv[1], argv[2], &hints, &servinfo)) != 0){    // get the address info for given IP and PORT number
-        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(error));
-        exit(1);
-    }
-
-    int sockfd;
-    for(p=servinfo; p!=NULL; p=p->ai_next){
-        if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol))== -1){   // create the server socket
-            perror("server: socket");
-            continue;
-        }
-        if((error = bind(sockfd, p->ai_addr, p->ai_addrlen))== -1){     // bind the server to the IP address and port
-            perror("server: bind");
-            continue;
-        }
-        break;
-    }
-    if(p==NULL){
-        fprintf(stderr, "my sock fd: failed to bind\n");
-        return 2;
-    }
 
     // Initializing the required variables
     char buf[1024];
     int num_bytes;
 
     struct sockaddr new_a;
-    new_a = *(p->ai_addr);
+    new_a = *(server_conn_info.address_info.ai_addr);
+
     struct sockaddr_in* new_addr;
     new_addr = (struct sockaddr_in*) &new_a;
-    new_addr->sin_port = htons(0);  //Bowei, do not understand here
+    new_addr->sin_port = htons(0);
 
+    //Bowei, do not understand here
     sa.sa_handler = sigchld_handler; // reap all dead processes
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
@@ -126,7 +98,7 @@ int main(int argc, char *argv[]){
         if(!fork()){
             close(sockfd);
             //getting new socket with random port number for communication
-            if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol))== -1){   // create the new server socket
+            if((sockfd = socket(server_conn_info.address_info.ai_family, server_conn_info.address_info.ai_socktype, server_conn_info.address_info.ai_protocol))== -1){   // create the new server socket
                 perror("server: socket");
             }
 
@@ -242,6 +214,6 @@ int main(int argc, char *argv[]){
         free(out);
     }
     close(sockfd);
-    freeaddrinfo(servinfo);
+    freeaddrinfo(&server_conn_info.address_info);
     return 0;
 }
