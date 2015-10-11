@@ -49,12 +49,13 @@ int main(int argc, char *argv[]){
     char buf[1024];
     int num_bytes;
 
-    struct sockaddr new_a;
-    new_a = *(server_conn_info.address_info.ai_addr);
+    struct sockaddr new_addr;
+    new_addr = *(server_conn_info.address_info.ai_addr);
 
-    struct sockaddr_in* new_addr;
-    new_addr = (struct sockaddr_in*) &new_a;
-    new_addr->sin_port = htons(0);
+    struct sockaddr_in* p_new_addr_in;
+    p_new_addr_in = (struct sockaddr_in*) &new_addr;
+    p_new_addr_in->sin_port = htons(0); // so can have random new available port
+
 
     //Bowei, do not understand here
     sa.sa_handler = sigchld_handler; // reap all dead processes
@@ -85,41 +86,42 @@ int main(int argc, char *argv[]){
         );
         //printf("Server: packet is %d bytes long\n", num_bytes);
 
-        struct tftp *out;
-        out = decode(buf);  //decode received message
+        struct tftp *p_rec_tftpR;
+        p_rec_tftpR = decode(buf);  //decode received message
 
-        cout <<"Opcode = "<< out->opcode <<", Filename = "<< out->filename <<", Mode = "<< out->mode << endl;
+        cout <<"Opcode = "<< p_rec_tftpR->opcode <<", Filename = "<< p_rec_tftpR->filename <<", Mode = "<< p_rec_tftpR->mode << endl;
 
-        if(out->opcode != RRQ){
+        if(p_rec_tftpR->opcode != RRQ){
             cout << "Invalid Opcode Received" << endl;
             continue;
         }
 
         if(!fork()){
             close(sockfd);
-            //getting new socket with random port number for communication
+            //getting new socket
             if((sockfd = socket(server_conn_info.address_info.ai_family, server_conn_info.address_info.ai_socktype, server_conn_info.address_info.ai_protocol))== -1){   // create the new server socket
                 perror("server: socket");
             }
-
-            if((error = bind(sockfd, &new_a, sizeof(new_a)))== -1){     // bind the server to the IP address and port
+            // bind this sockfd with port 0, ( )
+            if((error = bind(sockfd, &new_addr, sizeof(new_addr)))== -1){     // bind the server to the IP address and port
                 perror("server: bind");
             }
 
-            socklen_t len = sizeof(new_a);
-            if (getsockname(sockfd, &new_a, &len) == -1) {
+            socklen_t len = sizeof(new_addr);
+            //http://stackoverflow.com/questions/1365265/on-localhost-how-to-pick-a-free-port-number
+            if (getsockname(sockfd, &new_addr, &len) == -1) {
                 perror("getsockname");
             }
-            //printf("New Client Port %hu\n",ntohs(new_addr->sin_port));
+            printf("New Client Port %hu\n",ntohs(p_new_addr_in->sin_port));
 
             /***********************************************************************************/
             // Opening requested file and send ERROR message if file could not be opened
             // ifstream is class
             ifstream myfile;
             // call its member function
-            myfile.open(out->filename,ios::in | ios::binary);
+            myfile.open(p_rec_tftpR->filename,ios::in | ios::binary);
             if(myfile.is_open()==false){
-                cout << "Could not open requested file " << out->filename << endl;
+                cout << "Could not open requested file " << p_rec_tftpR->filename << endl;
                 printf("------------------------------------------------------------\n");
                 string message = "**Could not open requested file**";
                 char *emsg= (char *)malloc(1024*sizeof(char));
@@ -135,21 +137,23 @@ int main(int argc, char *argv[]){
             }
             // Calculate the size of the file
             streampos first,last;
+            // seekg: Set position in input sequence
+            // tellg: Get position in input sequence
+            myfile.seekg(0,ios::beg);
             first = myfile.tellg();
             myfile.seekg(0,ios::end);
             last = myfile.tellg();
-            myfile.seekg(0,ios::beg);
             int filesize = last - first;
             int num_packets = (filesize/512) + 1;           // Calculate the number of packets to be sent
-
-            cout << "File Size = " << filesize << ", Packets = " << num_packets << ", New Port = " << ntohs(new_addr->sin_port) << endl;
+            myfile.seekg(0,ios::beg); // set the position of input sequence back
+            cout << "File Size = " << filesize << ", Packets = " << num_packets << ", New Port = " << ntohs(p_new_addr_in->sin_port) << endl;
 
             char file_buf[513];
-            int block = 0, last_ack = 0, resend = 0, m_len;
+            int blocknumber = 0, last_ack = 0, resend = 0, m_len;
 
-            free(out->filename);
-            free(out->mode);
-            free(out);
+            free(p_rec_tftpR->filename);
+            free(p_rec_tftpR->mode);
+            free(p_rec_tftpR);
 
             FD_SET(sockfd,&master);
             fdmax = sockfd;
@@ -158,21 +162,21 @@ int main(int argc, char *argv[]){
             t.tv_usec = 100000;
 
             do{
-                if(last_ack==block){
+                if(last_ack==blocknumber){
                     myfile.read(file_buf,512);                  // Read next 512 bytes
                     m_len = myfile.gcount();
-                    block++;
+                    blocknumber++;
                     resend = 0;
-                    //cout << "Block : " << block << endl;
+                    //cout << "Blocknumber : " << blocknumber << endl;
                 }
                 if(resend > 0){
                     if(resend == 51){
                         cout << "Time Out !! " << endl;
                         break;
                     }
-                    cout << "Resending Attempt " << resend << " for Block " << block << endl;
+                    cout << "Resending Attempt " << resend << " for Blocknumber " << blocknumber << endl;
                 }
-                char *packet = encode(DATA,block,file_buf,m_len);                       // Encode the data into the TFTP packet structure
+                char *packet = encode(DATA,blocknumber,file_buf,m_len);                       // Encode the data into the TFTP packet structure
                 if( (num_bytes = sendto(sockfd,packet,m_len+4,0,(struct sockaddr *)&client_addr,addr_len)) == -1 ){ // Send Data Packet
                     perror("server: sendto");
                     exit(1);
@@ -193,10 +197,10 @@ int main(int argc, char *argv[]){
                     }
                     struct sockaddr_in* tmp_client_a = (struct sockaddr_in*)&client_addr;
                     if(tmp_client_a->sin_addr.s_addr == new_client_a->sin_addr.s_addr){
-                        out = decode(buf);                                      // decode ACK message
-                        last_ack = out->blocknumber;
+                        p_rec_tftpR = decode(buf);                                      // decode ACK message
+                        last_ack = p_rec_tftpR->blocknumber;
                         //cout << "ACK : " << last_ack << endl;
-                        free(out);
+                        free(p_rec_tftpR);
                     }
                 }
                 resend++;
@@ -209,9 +213,9 @@ int main(int argc, char *argv[]){
             return 0;
             exit(0);
         } /// end of if (!fork())
-        free(out->filename);
-        free(out->mode);
-        free(out);
+        free(p_rec_tftpR->filename);
+        free(p_rec_tftpR->mode);
+        free(p_rec_tftpR);
     }
     close(sockfd);
     freeaddrinfo(&server_conn_info.address_info);

@@ -11,6 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="127.0.0.1 3000" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -31,6 +32,9 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="README.md" />
+		<Unit filename="server.cpp" />
+		<Unit filename="server.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />
