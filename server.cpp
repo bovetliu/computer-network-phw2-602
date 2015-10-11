@@ -71,11 +71,11 @@ int main(int argc, char *argv[]){
     int fdmax = 0;        // maximum file descriptor number
 
 
-
+    int i =0;
     printf("Server Running ...\n");
     while(1){
         fdmax = construct_fd_set(&file_descriptors, &server_conn_info, clients_conn_info);
-        if (select (fdmax+1), &file_descriptors, NULL, NULL, NULL)<0){
+        if (select (fdmax+1, &file_descriptors, NULL, NULL, NULL)<0){
             perror("Select failed.");
             exit(1);
         }
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]){
         {
               if(clients_conn_info[i].sockfd > 0 && FD_ISSET(clients_conn_info[i].sockfd, &file_descriptors))
               {
-                handle_client_message(clients_conn_info, i);
+                //handle_client_message(clients_conn_info, i);
               }
         }
 

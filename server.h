@@ -325,7 +325,7 @@ void handle_user_input(connection_info clients[], int server_sockfd)
     }
 }
 
-void handle_new_connection( connection_info &server_conn_info, connection_info clients[], struct sockaddr_storage &client_addr_storage, char *buff){
+void handle_new_connection( connection_info &server_conn_info, connection_info clients[], struct sockaddr_storage &client_addr_storage, char *buf){
     int new_sockfd;
     int address_len;
     int error;
@@ -363,12 +363,26 @@ void handle_new_connection( connection_info &server_conn_info, connection_info c
     for(i = 0; i < MAX_CLIENTS; i++)
     {
       if(clients[i].sockfd == 0) {
-        clients[i].sockfd = new_socket;
+        clients[i].sockfd = new_sockfd;
+
         break;
     } else if (i == MAX_CLIENTS ) // if we can accept no more clients
     {
         // TODO
     }
+    if((error = bind( clients[i].sockfd, (struct sockaddr *) &(clients[i].address), sizeof clients[i].address)) == -1){
+        perror("server: bind");
+    }
+
+    addr_len = sizeof(clients[i].address);
+    //http://stackoverflow.com/questions/1365265/on-localhost-how-to-pick-a-free-port-number
+    if (getsockname(clients[i].sockfd, (struct sockaddr *)&(clients[i].address), &addr_len) == -1) {
+        perror("getsockname");
+    }
+    printf("New client port %hu\n", ntohs(clients[i].address.sin_port));
+
+
+
 
 
 
@@ -376,13 +390,7 @@ void handle_new_connection( connection_info &server_conn_info, connection_info c
 //
 //    }
 }
-
-void occupyOneClientSlot(struct sockaddr_in their_add, connection_info clients[])
-{
-    printf("occupy\n");
-    return;
 }
-
 
 
 #endif // SERVER_H
