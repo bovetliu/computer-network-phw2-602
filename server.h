@@ -266,7 +266,6 @@ int initialize_server( int argc, char* argv[], connection_info& server_info)
 
 void stop_server(connection_info connections[], int server_sockfd)
 {
-
     int i;
     for(i = 0; i < MAX_CLIENTS; i++)
     {
@@ -324,6 +323,58 @@ void handle_user_input(connection_info clients[], int server_sockfd)
     {
         stop_server(clients, server_sockfd);
     }
+}
+
+void handle_new_connection( connection_info &server_conn_info, connection_info clients[], struct sockaddr_storage &client_addr_storage, char *buff){
+    int new_sockfd;
+    int address_len;
+    int error;
+    int num_bytes;
+    socklen_t addr_len;
+    addr_len = sizeof client_addr_storage;
+    char ipstr[INET_ADDRSTRLEN];
+    if ( (num_bytes = recvfrom(server_conn_info.sockfd, buf, 1023,0, (struct sockaddr *)&client_addr_storage,&addr_len )) ==-1 ){
+        perror("recvfrom");
+        exit(1);
+    }
+    struct sockaddr_in* new_client_addr_in = (struct sockaddr_in*)&client_addr_storage;
+
+    printf("Server: got packet from %s on port %hu\n",
+        inet_ntop(client_addr_storage.ss_family,get_in_addr((struct sockaddr *)&client_addr_storage),ipstr, sizeof ipstr),
+        ntohs(new_client_addr_in->sin_port)
+    );
+
+    struct tftp *p_rec_tftpR;
+    p_rec_tftpR = decode(buf);  //decode received message
+    cout <<"Opcode = "<< p_rec_tftpR->opcode <<", Filename = "<< p_rec_tftpR->filename <<", Mode = "<< p_rec_tftpR->mode << endl;
+    if(p_rec_tftpR->opcode != RRQ){
+        cout << "Invalid Opcode Received" << endl;
+        return;
+    }
+
+
+    if((new_sockfd = socket(server_conn_info.address_info.ai_family,
+        server_conn_info.address_info.ai_socktype,
+        server_conn_info.address_info.ai_protocol))== -1)
+    {   // create the new server socket
+        perror("server: socket");
+    }
+    int i;
+    for(i = 0; i < MAX_CLIENTS; i++)
+    {
+      if(clients[i].sockfd == 0) {
+        clients[i].sockfd = new_socket;
+        break;
+    } else if (i == MAX_CLIENTS ) // if we can accept no more clients
+    {
+        // TODO
+    }
+
+
+
+//    if ((error = bind(new_sockfd, ))==-1 ){
+//
+//    }
 }
 
 void occupyOneClientSlot(struct sockaddr_in their_add, connection_info clients[])
