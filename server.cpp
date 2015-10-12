@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
     char buf[1024];
     int num_bytes;
 
-    struct sockaddr_in new_addr_in, client_addr_in, tmp_addr_in;
+    struct sockaddr_in new_addr_in, client_addr_in;
     socklen_t addr_len, tmp_len;
     new_addr_in = server_conn_info.address;
     new_addr_in.sin_port = htons(0); // so can have random new available port
@@ -97,17 +97,18 @@ int main(int argc, char *argv[]){
             if((sockfd = socket(server_conn_info.address_info.ai_family, server_conn_info.address_info.ai_socktype, server_conn_info.address_info.ai_protocol))== -1){   // create the new server socket
                 perror("server: socket");
             }
+            // refer to page 38, i do not need to bind socket of sender
             // bind this sockfd with port 0, ( )
-            if((error = bind(sockfd, (struct sockaddr *)&new_addr_in, sizeof(new_addr_in)))== -1){     // bind the server to the IP address and port 0, port 0 is important
-                perror("server: bind");
-            }
-
-            addr_len = sizeof(new_addr_in);
-            //http://stackoverflow.com/questions/1365265/on-localhost-how-to-pick-a-free-port-number
-            if (getsockname(sockfd,(struct sockaddr * ) &new_addr_in, &addr_len) == -1) {
-                perror("getsockname");
-            }
-            printf("New Client Port %hu\n",ntohs(new_addr_in.sin_port));
+//            if((error = bind(sockfd, (struct sockaddr *)&new_addr_in, sizeof(new_addr_in)))== -1){     // bind the server to the IP address and port 0, port 0 is important
+//                perror("server: bind");
+//            }
+//            // I do not care which port i assigned to new_addr_in, system will handle it
+//            addr_len = sizeof(new_addr_in);
+//            //http://stackoverflow.com/questions/1365265/on-localhost-how-to-pick-a-free-port-number
+//            if (getsockname(sockfd,(struct sockaddr * ) &new_addr_in, &addr_len) == -1) {
+//                perror("getsockname");
+//            }
+//            printf("New Client Port %hu\n",ntohs(new_addr_in.sin_port));
 
             /***********************************************************************************/
             // Opening requested file and send ERROR message if file could not be opened
@@ -143,7 +144,8 @@ int main(int argc, char *argv[]){
             int num_packets = ((last - first) /512) + 1;           // Calculate the number of packets to be sent
             myfile.seekg(0,ios::beg); // set the position of input sequence back
 
-            cout << "File Size = " << last - first<< ", Packets = " << num_packets << ", New Port = " << ntohs(new_addr_in.sin_port) << endl;
+            cout << "File Size = " << last - first<< ", Packets = " << num_packets << endl;
+            //cout << "File Size = " << last - first<< ", Packets = " << num_packets << ", New Port = " << ntohs(new_addr_in.sin_port) << endl;
 
             char file_buf[513];
             int blocknumber = 0, last_ack = 0, resend = 0, m_len;
@@ -184,6 +186,7 @@ int main(int argc, char *argv[]){
                     exit(4);
                 }
                 if(FD_ISSET(sockfd,&read_fds)){
+                    struct sockaddr_in tmp_addr_in;
                     tmp_len = sizeof tmp_addr_in;
                     if ( (num_bytes = recvfrom(sockfd, buf, 1023 , 0,(struct sockaddr *)&tmp_addr_in, &tmp_len)) == -1 ) {        // receive ACK
                         perror("recvfrom");
