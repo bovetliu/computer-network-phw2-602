@@ -1,5 +1,6 @@
-#ifndef SERVER_H
-#define SERVER_H
+
+#ifndef SERVER_UTIL_H
+#define SERVER_UTIL_H
 #include<sys/types.h>
 #include<sys/socket.h>
 #include<netdb.h>
@@ -20,6 +21,7 @@
 #include<fstream>
 #include<string>
 #include<cstdlib>
+#include <deque>
 
 #define RRQ 1
 #define DATA 3
@@ -32,7 +34,7 @@
 using namespace std;
 
 
-void debug_helper(int e )
+static void debug_helper(int e )
 {
     switch(e)
     {
@@ -66,7 +68,7 @@ typedef struct
 } connection_info;
 
 //function to reep dead processes (Taken from BEEJ.US)
-void sigchld_handler(int s)
+static void sigchld_handler(int s)
 {
     while(waitpid(-1, NULL, WNOHANG) > 0);
 }
@@ -76,7 +78,7 @@ void sigchld_handler(int s)
 ** from Beej
 ** packi16() -- store a 16-bit int into a char buffer (like htons())
 */
-void packi16(char *buf, unsigned short int i)
+static void packi16(char *buf, unsigned short int i)
 {
     // for example i = 0x34d6
     // buffer[0] = 34   buffer[1] = d6
@@ -85,7 +87,7 @@ void packi16(char *buf, unsigned short int i)
     *buf++ = i;
 }
 
-uint16_t unpacki16(char *buf)     //change  network byte order to the host order (16bit)
+static uint16_t unpacki16(char *buf)     //change  network byte order to the host order (16bit)
 {
     uint16_t i;
     memcpy(&i,buf,2);  // require <cstring>
@@ -96,7 +98,7 @@ uint16_t unpacki16(char *buf)     //change  network byte order to the host order
 /*
 * In this experiment, server only expects to send DATA or ERROR
 */
-char* encode(uint16_t opcode, uint16_t blocknumber, char* data, int datalength)
+static char* encode(uint16_t opcode, uint16_t blocknumber, char* data, int datalength)
 {
     char* serialized_packet;
     try
@@ -131,7 +133,7 @@ char* encode(uint16_t opcode, uint16_t blocknumber, char* data, int datalength)
 }
 
 
-tftp_pack* decode(char * serialized_packet)
+static tftp_pack* decode(char * serialized_packet)
 {
     tftp_pack* output;
     output = (tftp_pack*) malloc(sizeof(tftp_pack));
@@ -192,7 +194,7 @@ tftp_pack* decode(char * serialized_packet)
 
 // from page 36 of beej
 // get pointer of sin_addr or sin6_addr , IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
+static void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
     {
@@ -204,7 +206,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 // the purpose of this function is get valid socket file descriptor
 // return 0, means it is functioning properly
-int initialize_server( int argc, char* argv[], connection_info& server_info)
+static int initialize_server( int argc, char* argv[], connection_info& server_info)
 {
 
     int sockfd;
@@ -264,6 +266,7 @@ int initialize_server( int argc, char* argv[], connection_info& server_info)
 }
 
 
+<<<<<<< HEAD:server.h
 void stop_server(connection_info connections[], int server_sockfd)
 {
     int i;
@@ -276,34 +279,49 @@ void stop_server(connection_info connections[], int server_sockfd)
     printf("user exit from server\n");
     exit(0);
 }
+=======
+//static void stop_server(Task tasks[], int server_sockfd)
+//{
+//
+//    int i;
+//    for(i = 0; i < MAX_CLIENTS; i++)
+//    {
+//        //send();
+//        close(tasks[i].m_sockfd);
+//    }
+//    close(server_sockfd);
+//    printf("user exit from server\n");
+//    exit(0);
+//}
+>>>>>>> fork:server_util.h
 
 
 /*
 *  Treat file descriptor like a managed piple, how many pipes this server will care about? 4
 *  Following keeps put active sockfd into fd_set, to make them managed
 */
-int construct_fd_set(fd_set *set, connection_info *server_info, connection_info clients[])
-{
-    FD_ZERO(set);
-    FD_SET(STDIN_FILENO, set);
-    FD_SET(server_info->sockfd, set);
-
-    int max_fd = server_info->sockfd;
-    int i;
-    for(i = 0; i < MAX_CLIENTS; i++)
-    {
-        if(clients[i].sockfd > 0)
-        {
-            FD_SET(clients[i].sockfd, set);
-            if(clients[i].sockfd > max_fd)
-            {
-                max_fd = clients[i].sockfd;
-            }
-        }
-    }
-    return max_fd;
-}
-void trim_newline(char *text)
+//static int construct_fd_set(fd_set *set, connection_info *server_info, Task *tasks )
+//{
+//    FD_ZERO(set);
+//    FD_SET(STDIN_FILENO, set);
+//    FD_SET(server_info->sockfd, set);
+//
+//    int max_fd = server_info->sockfd;
+//    int i;
+//    for(i = 0; i < MAX_CLIENTS; i++)
+//    {
+//        if( (tasks+i)->m_sockfd > 0)
+//        {
+//            FD_SET((tasks+i)->m_sockfd, set);
+//            if( (tasks+i)->m_sockfd > max_fd)
+//            {
+//                max_fd = (tasks+i)->m_sockfd;
+//            }
+//        }
+//    }
+//    return max_fd;
+//}
+static void trim_newline(char *text)
 {
     int len = strlen(text) - 1;
     if (text[len] == '\n')
@@ -313,6 +331,7 @@ void trim_newline(char *text)
 }
 
 
+<<<<<<< HEAD:server.h
 void handle_user_input(connection_info clients[], int server_sockfd)
 {
     char input[255];
@@ -384,5 +403,41 @@ void occupyOneClientSlot(struct sockaddr_in their_add, connection_info clients[]
 }
 
 
+=======
+//static void handle_user_input(connection_info clients[], int server_sockfd)
+//{
+//    char input[255];
+//    fgets(input, sizeof(input), stdin);
+//    trim_newline(input);
+//
+//    if(input[0] == 'q')
+//    {
+//        stop_server(clients, server_sockfd);
+//    }
+//}
+
+//static void handle_new_connection( int new_sockfd,struct sockaddr_in * client_addr_in,  char * filename, Task tasks[]){
+//    if (new_sockfd < 0){
+//        perror("Accept failed");
+//        exit(1);
+//    }
+//    int i;
+//    for(i = 0; i < MAX_CLIENTS; i++)
+//    {
+//        if(tasks[i].m_sockfd == 0)
+//        {
+//            Task task(new_sockfd, filename, *client_addr_in);
+//            tasks[i] = task;
+//            break;
+//        }
+//        else if (i == MAX_CLIENTS -1) // if we can accept no more clients
+//        {
+//          printf("new socket is rejected because server cannot load more\n");
+//          close(new_sockfd);
+//        }
+//    }
+//
+//}
+>>>>>>> fork:server_util.h
 
 #endif // SERVER_H

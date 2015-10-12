@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1444579569 source:/home/boweiliu/workspace/cb_workspace/jiahao_hw2/server.cpp
+1444612648 source:/home/boweiliu/workspace/cb_workspace/jiahao_hw2/server.cpp
 	<sys/types.h>
 	<sys/socket.h>
 	<netdb.h>
@@ -16,4 +16,67 @@
 	<fstream>
 	<string>
 	<cstdlib>
+	"server.h"
+
+1444606504 /home/boweiliu/workspace/cb_workspace/jiahao_hw2/server.h
+	<sys/types.h>
+	<sys/socket.h>
+	<netdb.h>
+	<unistd.h>
+	<fcntl.h>
+	<arpa/inet.h>
+	<netinet/in.h>
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<sys/wait.h>
+	<signal.h>
+	<iostream>
+	<fstream>
+	<string>
+	<cstdlib>
+
+1444640967 source:/home/boweiliu/workspace/cb_workspace/jiahao_hw2/main.cpp
+	"task.h"
+
+1444636419 /home/boweiliu/workspace/cb_workspace/jiahao_hw2/server_util.h
+	<sys/types.h>
+	<sys/socket.h>
+	<netdb.h>
+	<unistd.h>
+	<fcntl.h>
+	<arpa/inet.h>
+	<netinet/in.h>
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<sys/wait.h>
+	<signal.h>
+	<iostream>
+	<fstream>
+	<string>
+	<cstdlib>
+	<deque>
+
+1444640822 source:/home/boweiliu/workspace/cb_workspace/jiahao_hw2/task.cpp
+	"task.h"
+
+1444640777 /home/boweiliu/workspace/cb_workspace/jiahao_hw2/task.h
+	<sys/types.h>
+	<sys/socket.h>
+	<netdb.h>
+	<unistd.h>
+	<fcntl.h>
+	<arpa/inet.h>
+	<netinet/in.h>
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<sys/wait.h>
+	<signal.h>
+	<iostream>
+	<fstream>
+	<string>
+	<cstdlib>
+	"server_util.h"
 
