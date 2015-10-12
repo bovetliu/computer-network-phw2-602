@@ -21,7 +21,8 @@
 #include<fstream>
 #include<string>
 #include<cstdlib>
-#include<deque>
+#include <deque>
+
 #define RRQ 1
 #define DATA 3
 #define ACK 4
@@ -265,46 +266,46 @@ static int initialize_server( int argc, char* argv[], connection_info& server_in
 }
 
 
-static void stop_server(task tasks[], int server_sockfd)
-{
-
-    int i;
-    for(i = 0; i < MAX_CLIENTS; i++)
-    {
-        //send();
-        close(tasks[i].m_sockfd);
-    }
-    close(server_sockfd);
-    printf("user exit from server\n");
-    exit(0);
-}
+//static void stop_server(Task tasks[], int server_sockfd)
+//{
+//
+//    int i;
+//    for(i = 0; i < MAX_CLIENTS; i++)
+//    {
+//        //send();
+//        close(tasks[i].m_sockfd);
+//    }
+//    close(server_sockfd);
+//    printf("user exit from server\n");
+//    exit(0);
+//}
 
 
 /*
 *  Treat file descriptor like a managed piple, how many pipes this server will care about? 4
 *  Following keeps put active sockfd into fd_set, to make them managed
 */
-static int construct_fd_set(fd_set *set, connection_info *server_info, task tasks[])
-{
-    FD_ZERO(set);
-    FD_SET(STDIN_FILENO, set);
-    FD_SET(server_info->sockfd, set);
-
-    int max_fd = server_info->sockfd;
-    int i;
-    for(i = 0; i < MAX_CLIENTS; i++)
-    {
-        if(tasks[i].m_sockfd > 0)
-        {
-            FD_SET(tasks[i].m_sockfd, set);
-            if(tasks[i].m_sockfd > max_fd)
-            {
-                max_fd = tasks[i].m_sockfd;
-            }
-        }
-    }
-    return max_fd;
-}
+//static int construct_fd_set(fd_set *set, connection_info *server_info, Task *tasks )
+//{
+//    FD_ZERO(set);
+//    FD_SET(STDIN_FILENO, set);
+//    FD_SET(server_info->sockfd, set);
+//
+//    int max_fd = server_info->sockfd;
+//    int i;
+//    for(i = 0; i < MAX_CLIENTS; i++)
+//    {
+//        if( (tasks+i)->m_sockfd > 0)
+//        {
+//            FD_SET((tasks+i)->m_sockfd, set);
+//            if( (tasks+i)->m_sockfd > max_fd)
+//            {
+//                max_fd = (tasks+i)->m_sockfd;
+//            }
+//        }
+//    }
+//    return max_fd;
+//}
 static void trim_newline(char *text)
 {
     int len = strlen(text) - 1;
@@ -315,50 +316,39 @@ static void trim_newline(char *text)
 }
 
 
-static void handle_user_input(connection_info clients[], int server_sockfd)
-{
-    char input[255];
-    fgets(input, sizeof(input), stdin);
-    trim_newline(input);
-
-    if(input[0] == 'q')
-    {
-        stop_server(clients, server_sockfd);
-    }
-}
-
-static void handle_new_connection( int new_sockfd,struct sockaddr_in * client_addr_in,  char * filename, task tasks[]){
-    if (new_sockfd < 0){
-        perror("Accept failed");
-        exit(1);
-    }
-    int i;
-    for(i = 0; i < MAX_CLIENTS; i++)
-    {
-        if(tasks[i].m_sockfd == 0)
-        {
-            Task task(new_sockfd, filename, *client_addr_in);
-            tasks[i] = task;
-            break;
-        }
-        else if (i == MAX_CLIENTS -1) // if we can accept no more clients
-        {
-          printf("new socket is rejected because server cannot load more\n");
-          close(new_socket);
-        }
-    }
-
-}
-
-//static void handle_task(int sockfd, char* filename, struct sockaddr_in cli_addr_in, deque<Task> &tasks)
+//static void handle_user_input(connection_info clients[], int server_sockfd)
 //{
-//    deque<Task>::iterator it = tasks.begin();
-//    while(it != tasks.end){
-//        it++;
+//    char input[255];
+//    fgets(input, sizeof(input), stdin);
+//    trim_newline(input);
+//
+//    if(input[0] == 'q')
+//    {
+//        stop_server(clients, server_sockfd);
 //    }
-//    return;
 //}
 
-
+//static void handle_new_connection( int new_sockfd,struct sockaddr_in * client_addr_in,  char * filename, Task tasks[]){
+//    if (new_sockfd < 0){
+//        perror("Accept failed");
+//        exit(1);
+//    }
+//    int i;
+//    for(i = 0; i < MAX_CLIENTS; i++)
+//    {
+//        if(tasks[i].m_sockfd == 0)
+//        {
+//            Task task(new_sockfd, filename, *client_addr_in);
+//            tasks[i] = task;
+//            break;
+//        }
+//        else if (i == MAX_CLIENTS -1) // if we can accept no more clients
+//        {
+//          printf("new socket is rejected because server cannot load more\n");
+//          close(new_sockfd);
+//        }
+//    }
+//
+//}
 
 #endif // SERVER_H

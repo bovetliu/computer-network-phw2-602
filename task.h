@@ -31,11 +31,13 @@
 #define MAX_CLIENTS 4
 
 using namespace std;
+
 class Task{
     private:
     int m_hehe;
     public:
     int m_len;
+    int m_num_packets;
     int m_sockfd = 0;           // important
     char m_filename[1024];  // important
     struct sockaddr_in m_cli_addr_in;  // important
@@ -44,9 +46,19 @@ class Task{
     int m_last_ack;
     int m_resent;
     char file_buf[513];
-    Task ();
+
+    Task();
     Task(int sockfd, char* filename, struct sockaddr_in cli_addr_in );
+    Task(const Task&);
+
     bool is_same_task( char* filename, struct sockaddr_in cli_addr_in);
+    void respond (struct tftp* resondpack );
+    void init_package();
+    Task& operator=(const Task &rhs);
+
+    static int construct_fd_set(fd_set *set, connection_info *server_info, deque<Task> *tasks );
+
+    static void handle_new_connection( int new_sockfd,struct sockaddr_in * client_addr_in,  char * filename,  deque<Task> *tasks);
 
 };
 
