@@ -266,35 +266,4 @@ static int initialize_server( int argc, char* argv[], connection_info& server_in
 }
 
 
-
-/*
-*  Treat file descriptor like a managed piple, how many pipes this server will care about? 4
-*  Following keeps put active sockfd into fd_set, to make them managed
-*/
-//static int construct_fd_set(fd_set *set, connection_info *server_info, Task *tasks )
-//{
-//    FD_ZERO(set);
-//    FD_SET(STDIN_FILENO, set);
-//    FD_SET(server_info->sockfd, set);
-//
-//    int max_fd = server_info->sockfd;
-//    int i;
-//    for(i = 0; i < MAX_CLIENTS; i++)
-//    {
-//        if( (tasks+i)->m_sockfd > 0)
-//        {
-//            FD_SET((tasks+i)->m_sockfd, set);
-//            if( (tasks+i)->m_sockfd > max_fd)
-//            {
-//                max_fd = (tasks+i)->m_sockfd;
-//            }
-//        }
-//    }
-//    return max_fd;
-//}
-
-
-
-
-
 #endif // SERVER_H

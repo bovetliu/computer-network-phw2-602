@@ -1,12 +1,6 @@
 //
-//#include "server_util.h"
+
 #include "task.h"
-#define RRQ 1
-#define DATA 3
-#define ACK 4
-#define ERROR 5
-#define OCTET "octet"
-#define DATALENGTH 512
 
 // Thanks BEEJ.US for tutorial on how to use SELECT and pack and unpack functions
 // Some parts of the code have been taken from BEEJ.US
