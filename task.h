@@ -36,7 +36,7 @@ class Task{
     int m_hehe;
     public:
     int m_len;
-    int m_sockfd;           // important
+    int m_sockfd = 0;           // important
     char m_filename[1024];  // important
     struct sockaddr_in m_cli_addr_in;  // important
     ifstream m_file;
@@ -45,7 +45,8 @@ class Task{
     int m_resent;
     char file_buf[513];
     Task ();
-    Task(int sockfd, char* filename, struct sockaddr_in m_cli_addr_in );
+    Task(int sockfd, char* filename, struct sockaddr_in cli_addr_in );
+    bool is_same_task( char* filename, struct sockaddr_in cli_addr_in);
 
 };
 

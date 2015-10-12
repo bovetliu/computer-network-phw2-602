@@ -17,8 +17,10 @@ int main(int argc, char *argv[]){
     //struct sockaddr_storage client_addr, tmp_addr;
     char ipstr[INET_ADDRSTRLEN];        //INET6_ADDRSTRLEN for IPv6
     connection_info server_conn_info;
-    connection_info *clients_conn_info =(connection_info*)malloc(MAX_CLIENTS*sizeof(connection_info));
+    //connection_info *clients_conn_info =(connection_info*)malloc(MAX_CLIENTS*sizeof(connection_info));
+    task tasks[MAX_CLIENTS];
     initialize_server(argc, argv, server_conn_info);
+    printf("initial sockfd: %d\n", server_conn_info.sockfd);
 
     // Initializing the required variables
     char buf[1024];
@@ -39,69 +41,44 @@ int main(int argc, char *argv[]){
     }
     fd_set read_fds;  // temp file descriptor list for select()
     int fdmax;        // maximum file descriptor number
-    FD_ZERO(&read_fds);
     printf("Server Running ...\n");
 
     while(1){
-        addr_len = sizeof client_addr_in;
-        if ((num_bytes = recvfrom(server_conn_info.sockfd, buf, 1023 , 0,(struct sockaddr *)&client_addr_in, &addr_len)) == -1) {
-            perror("recvfrom");
-            exit(1);
+        fdmax = construct_fd_set(&read_fds, &server_conn_info, tasks);
+        if(select(max_fd+1, &read_fds, NULL, NULL, NULL) < 0)
+        {
+          perror("Select Failed");
+          stop_server(tasks, server_conn_info.sockfd);
         }
-        printf("Server: got packet from %s on port %hu\n",
-            inet_ntop(client_addr_in.sin_family,get_in_addr((struct sockaddr *)&client_addr_in),ipstr, sizeof ipstr),
-            ntohs(client_addr_in.sin_port)
-        );
-        //printf("Server: packet is %d bytes long\n", num_bytes);
-        p_rec_tftpR = decode(buf);  //decode received message
-        cout <<"Opcode = "<< p_rec_tftpR->opcode <<", Filename = "<< p_rec_tftpR->filename <<", Mode = "<< p_rec_tftpR->mode << endl;
-        if(p_rec_tftpR->opcode != RRQ){
-            cout << "Invalid Opcode Received" << endl;
-            continue;
-        }
-        //getting new socket, according beej 38, I do not need bind this sockfd
-        int sockfd = 0;
-        if((sockfd = socket(server_conn_info.address_info.ai_family, server_conn_info.address_info.ai_socktype, server_conn_info.address_info.ai_protocol))== -1){   // create the new server socket
-            perror("server: socket");
-        }
-        // ifstream is class
-        ifstream myfile;
-        myfile.open(p_rec_tftpR->filename,ios::in | ios::binary);
-        if(myfile.is_open()==false){
-            cout << "Could not open requested file " << p_rec_tftpR->filename << endl;
-            printf("------------------------------------------------------------\n");
-            string message = "**Could not open requested file**";
-            char *emsg= (char *)malloc(1024*sizeof(char));
-            emsg = strcpy(emsg,message.c_str());
-            int emsg_len = strlen(emsg);
-            char *epacket = encode(ERROR,1,emsg,emsg_len);
-            free(emsg);
-            if( (num_bytes = sendto(sockfd,epacket,emsg_len+5,0,(struct sockaddr *)&client_addr_in,addr_len)) == -1 ){
-                perror("server: sendto");
+
+        if (FD_ISSET(server_conn_info.sockfd, &read_fds)){
+            // handle new connection
+            addr_len = sizeof client_addr_in;
+            if ((num_bytes = recvfrom(server_conn_info.sockfd, buf, 1023 , 0,(struct sockaddr *)&client_addr_in, &addr_len)) == -1) {
+                perror("recvfrom");
                 exit(1);
             }
-            exit(0);
+            printf("Server: got packet from %s on port %hu\n",
+                inet_ntop(client_addr_in.sin_family,get_in_addr((struct sockaddr *)&client_addr_in),ipstr, sizeof ipstr),
+                ntohs(client_addr_in.sin_port)
+            );
+            //printf("Server: packet is %d bytes long\n", num_bytes);
+            p_rec_tftpR = decode(buf);  //decode received message
+            cout <<"Opcode = "<< p_rec_tftpR->opcode <<", Filename = "<< p_rec_tftpR->filename <<", Mode = "<< p_rec_tftpR->mode << endl;
+            if(p_rec_tftpR->opcode != RRQ){
+                cout << "Invalid Opcode Received" << endl;
+                continue;
+            }
+            //getting new socket, according beej 38, I do not need bind this sockfd
+            int new_sockfd = 0;
+            if((new_sockfd = socket(server_conn_info.address_info.ai_family, server_conn_info.address_info.ai_socktype, server_conn_info.address_info.ai_protocol))== -1){   // create the new server socket
+                perror("server: socket");
+            }
+            printf("new sockfd : %d\n",new_sockfd);
+            // now I have new sockfd, client_addr_in, p_rec_tftpR->filename  all three ready
+            //( int new_sockfd,struct sockaddr_in * client_addr_in,  char * filename, task tasks[])
+            handle_new_connection(new_sockfd, &client_addr_in,p_rec_tftpR->filename, tasks );
         }
-        // Calculate the size of the file
-        streampos first,last;
-        // seekg: Set position in input sequence
-        // tellg: Get position in input sequence
-        first = myfile.tellg();
-        myfile.seekg(0,ios::end);
-        last = myfile.tellg();
-        int num_packets = ((last - first) /512) + 1;           // Calculate the number of packets to be sent
-        myfile.seekg(0,ios::beg); // set the position of input sequence back
-
-        cout << "File Size = " << last - first<< ", Packets = " << num_packets << endl;
-        char file_buf[513];
-        int blocknumber = 0, last_ack = 0, resend = 0, m_len;
-
-        FD_SET(sockfd,&read_fds);
-        fdmax = sockfd;
-        struct timeval t;
-        t.tv_sec = 0;       // Set timeout to 100 ms
-        t.tv_usec = 100000;
-
         do{
             if(last_ack==blocknumber){
                 myfile.read(file_buf,512);                  // Read next 512 bytes
@@ -124,9 +101,8 @@ int main(int argc, char *argv[]){
             }
             free(packet);
 
-            t.tv_usec = 100000;                                         // reset the timeout counter
 
-            if( select(fdmax+1, &read_fds, NULL, NULL, &t) == -1){      // Select between client socket to wait for ACK or timeout after 100 ms
+            if( select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1){      // Select between client socket to wait for ACK or timeout after 100 ms
                 perror("server: select");
                 exit(4);
             }

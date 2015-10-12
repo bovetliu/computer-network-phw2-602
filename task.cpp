@@ -11,7 +11,7 @@ Task::Task(){
 Task::Task(int sockfd, char* filename, struct sockaddr_in cli_addr_in ){
     m_sockfd = sockfd;
     strcpy(m_filename, filename);
-    m_cli_addr_in = cli_addr_in;
+    memcpy ( &m_cli_addr_in, &cli_addr_in, sizeof(cli_addr_in) );
     int num_bytes;
     m_file.open(m_filename,ios::in | ios::binary);
     if(m_file.is_open()==false){
@@ -42,4 +42,10 @@ Task::Task(int sockfd, char* filename, struct sockaddr_in cli_addr_in ){
     cout << "File Size = " << last - first<< ", Packets = " << num_packets << endl;
     m_blocknumber = 0;
     m_last_ack = 0; m_resent = 0;
+}
+
+bool Task::is_same_task( char* filename, struct sockaddr_in cli_addr_in){
+    if ( strcmp(filename, m_filename)!= 0 && cli_addr_in.sin_addr.s_addr != m_cli_addr_in.sin_addr.s_addr){
+        return false;
+    } else return true;
 }
