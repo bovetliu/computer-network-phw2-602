@@ -266,35 +266,6 @@ static int initialize_server( int argc, char* argv[], connection_info& server_in
 }
 
 
-<<<<<<< HEAD:server.h
-void stop_server(connection_info connections[], int server_sockfd)
-{
-    int i;
-    for(i = 0; i < MAX_CLIENTS; i++)
-    {
-        //send();
-        close(connections[i].sockfd);
-    }
-    close(server_sockfd);
-    printf("user exit from server\n");
-    exit(0);
-}
-=======
-//static void stop_server(Task tasks[], int server_sockfd)
-//{
-//
-//    int i;
-//    for(i = 0; i < MAX_CLIENTS; i++)
-//    {
-//        //send();
-//        close(tasks[i].m_sockfd);
-//    }
-//    close(server_sockfd);
-//    printf("user exit from server\n");
-//    exit(0);
-//}
->>>>>>> fork:server_util.h
-
 
 /*
 *  Treat file descriptor like a managed piple, how many pipes this server will care about? 4
@@ -321,123 +292,9 @@ void stop_server(connection_info connections[], int server_sockfd)
 //    }
 //    return max_fd;
 //}
-static void trim_newline(char *text)
-{
-    int len = strlen(text) - 1;
-    if (text[len] == '\n')
-    {
-        text[len] = '\0';
-    }
-}
-
-
-<<<<<<< HEAD:server.h
-void handle_user_input(connection_info clients[], int server_sockfd)
-{
-    char input[255];
-    fgets(input, sizeof(input), stdin);
-    trim_newline(input);
-
-    if(input[0] == 'q')
-    {
-        stop_server(clients, server_sockfd);
-    }
-}
-
-void handle_new_connection( connection_info &server_conn_info, connection_info clients[], struct sockaddr_storage &client_addr_storage, char *buff){
-    int new_sockfd;
-    int address_len;
-    int error;
-    int num_bytes;
-    socklen_t addr_len;
-    addr_len = sizeof client_addr_storage;
-    char ipstr[INET_ADDRSTRLEN];
-    if ( (num_bytes = recvfrom(server_conn_info.sockfd, buf, 1023,0, (struct sockaddr *)&client_addr_storage,&addr_len )) ==-1 ){
-        perror("recvfrom");
-        exit(1);
-    }
-    struct sockaddr_in* new_client_addr_in = (struct sockaddr_in*)&client_addr_storage;
-
-    printf("Server: got packet from %s on port %hu\n",
-        inet_ntop(client_addr_storage.ss_family,get_in_addr((struct sockaddr *)&client_addr_storage),ipstr, sizeof ipstr),
-        ntohs(new_client_addr_in->sin_port)
-    );
-
-    struct tftp *p_rec_tftpR;
-    p_rec_tftpR = decode(buf);  //decode received message
-    cout <<"Opcode = "<< p_rec_tftpR->opcode <<", Filename = "<< p_rec_tftpR->filename <<", Mode = "<< p_rec_tftpR->mode << endl;
-    if(p_rec_tftpR->opcode != RRQ){
-        cout << "Invalid Opcode Received" << endl;
-        return;
-    }
-
-
-    if((new_sockfd = socket(server_conn_info.address_info.ai_family,
-        server_conn_info.address_info.ai_socktype,
-        server_conn_info.address_info.ai_protocol))== -1)
-    {   // create the new server socket
-        perror("server: socket");
-    }
-    int i;
-    for(i = 0; i < MAX_CLIENTS; i++)
-    {
-      if(clients[i].sockfd == 0) {
-        clients[i].sockfd = new_socket;
-        break;
-    } else if (i == MAX_CLIENTS ) // if we can accept no more clients
-    {
-        // TODO
-    }
 
 
 
-//    if ((error = bind(new_sockfd, ))==-1 ){
-//
-//    }
-}
 
-void occupyOneClientSlot(struct sockaddr_in their_add, connection_info clients[])
-{
-    printf("occupy\n");
-    return;
-}
-
-
-=======
-//static void handle_user_input(connection_info clients[], int server_sockfd)
-//{
-//    char input[255];
-//    fgets(input, sizeof(input), stdin);
-//    trim_newline(input);
-//
-//    if(input[0] == 'q')
-//    {
-//        stop_server(clients, server_sockfd);
-//    }
-//}
-
-//static void handle_new_connection( int new_sockfd,struct sockaddr_in * client_addr_in,  char * filename, Task tasks[]){
-//    if (new_sockfd < 0){
-//        perror("Accept failed");
-//        exit(1);
-//    }
-//    int i;
-//    for(i = 0; i < MAX_CLIENTS; i++)
-//    {
-//        if(tasks[i].m_sockfd == 0)
-//        {
-//            Task task(new_sockfd, filename, *client_addr_in);
-//            tasks[i] = task;
-//            break;
-//        }
-//        else if (i == MAX_CLIENTS -1) // if we can accept no more clients
-//        {
-//          printf("new socket is rejected because server cannot load more\n");
-//          close(new_sockfd);
-//        }
-//    }
-//
-//}
->>>>>>> fork:server_util.h
 
 #endif // SERVER_H
