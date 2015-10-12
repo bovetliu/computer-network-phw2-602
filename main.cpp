@@ -1,27 +1,6 @@
 
-#include<sys/types.h>
-#include<sys/socket.h>
-#include<netdb.h>
-#include<unistd.h>
-#include<fcntl.h>
-
-#include<arpa/inet.h>
-#include<netinet/in.h>
-
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
-
-#include<sys/wait.h>
-#include<signal.h>
-
-#include<iostream>
-#include<fstream>
-#include<string>
-#include<cstdlib>
-
 #include "server_util.h"
-
+#include "task.h"
 #define RRQ 1
 #define DATA 3
 #define ACK 4
